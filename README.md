@@ -13,7 +13,7 @@ The bot uses selective mean-reversion with a trend filter: it buys short pullbac
 - **Trend filter:** compares 48-bar and 120-bar exponential averages, checks the slow average's slope, and requires the price to remain near or above the slow trend.
 - **Low-volatility stand-aside:** skips entries when recent return volatility is below 2 basis points or the 60-bar price range is below 40 basis points.
 - **Fee-aware thresholds:** requires the pullback to exceed the estimated round-trip fees, slippage, and market impact, plus a margin. The entry threshold also accounts for recent price dispersion.
-- **Position sizing:** holds at most one position, uses up to 85% of available cash, and respects the replay's position-weight, minimum-notional, and liquidity constraints.
+- **Position sizing:** holds at most one position and starts with up to 85% of available cash, capped at 6 basis points of impact per liquidity hop. Qualified pullbacks can use up to 100% of cash with a 7-basis-point impact cap when their signal covers the larger order's estimated round-trip costs plus a margin. Orders respect position-weight and minimum-notional constraints.
 - **Exits and risk controls:** exits on profitable mean reversion, a profit target, a trailing pullback, a stop loss, a broken trend, or a 60-bar timeout. It waits 20 bars after closing a position and halts new entries after a 10% drawdown from peak equity.
 
 Indicators use observed closes only. Cash, order quantities, and position values use integer arithmetic. The bot rebuilds its indicators after a data gap longer than five minutes and retries rejected exits using the actual remaining position.
@@ -46,9 +46,10 @@ The bot was graded on the kit's development window with these results:
 
 | Metric | Result |
 | --- | ---: |
-| Net PnL | +2.60 USDC |
+| Net PnL | +2.776424 USDC |
+| Net PnL at doubled fees | +1.675395 USDC |
 | Trades | 6 |
 | Win rate | 100% |
-| Maximum drawdown | 0.12% |
+| Maximum drawdown | 0.143% |
 
 These figures describe the kit's development window; competition rank and reward are shown by the badges above.

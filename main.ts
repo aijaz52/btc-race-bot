@@ -120,13 +120,26 @@ await runBars({
       ? BigInt(fees.min_notional_quote_units) : 1_000_000n;
     if (spend < minimum) return [];
 
-    const impact = Number(state.impactBps(SYMBOL, spend) ?? 0n) + 1;
+    let impact = Number(state.impactBps(SYMBOL, spend) ?? 0n) + 1;
     const roundTrip = baseCost + 2 * impact;
     const dipBps = (fair / price - 1) * BPS;
     const deviation = Math.sqrt(mean(closes.slice(-20).map((p) => ((p / fair - 1) * BPS) ** 2)));
     const requiredDip = Math.max(20, roundTrip + 5, deviation * 0.4);
     // The short mean locates pullbacks; the slow trend keeps entries out of falling markets.
     if (dipBps < requiredDip) return [];
+
+    // Scale only qualified pullbacks, and require the larger trade to cover its costs.
+    let strongSpend = state.cash;
+    if (strongSpend > room) strongSpend = room;
+    for (const d of entryDepth) {
+      const limit = d * 7n / 10_000n / BigInt(entryDepth.length);
+      if (strongSpend > limit) strongSpend = limit;
+    }
+    const strongImpact = Number(state.impactBps(SYMBOL, strongSpend) ?? 0n) + 1;
+    if (dipBps >= baseCost + 2 * strongImpact + 2 && strongSpend > spend) {
+      spend = strongSpend;
+      impact = strongImpact;
+    }
 
     entryStopBps = 30;
     cooldownUntil = batch.seq + 3; // also throttles rejected buys
